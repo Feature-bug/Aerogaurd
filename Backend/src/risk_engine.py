@@ -44,6 +44,7 @@ def calculate_risk_index(sensor_data, zone, weather=None):
     else:
         reasons.append("Weather Data Unavailable")
 
+
     score = min(score, 100)
     recommendation = "SAFE" if score < 40 else "CAUTION" if score < 75 else "ABORT"
     
