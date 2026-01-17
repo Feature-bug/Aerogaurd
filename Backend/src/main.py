@@ -35,11 +35,10 @@ with open('config.json') as f:
 # Setup
 mappls = MapplsGeospace()
 weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])
-ser = serial.Serial('COM10', 115200, timeout=1)
 
 # Try to open serial port
 try:
-    ser = serial.Serial('COM3', 115200, timeout=1)
+    ser = serial.Serial('COM10', 115200, timeout=1)
     print("✅ Serial port COM3 opened successfully")
 except serial.SerialException as e:
     print(f"❌ Could not open COM3: {e}")
