@@ -6,13 +6,13 @@ from risk_engine import calculate_risk_index
 from weather_client import OpenWeatherClient
 
 # Load config
-with open('Backend\config.json') as f:
+with open('config.json') as f:
     config = json.load(f)
 
 # Setup
 mappls = MapplsGeospace()
 weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])
-ser = serial.Serial('COM3', 115200, timeout=1)
+ser = serial.Serial('COM10', 115200, timeout=1)
 
 print("--- UAV Pre-Flight Safety System Active ---")
 

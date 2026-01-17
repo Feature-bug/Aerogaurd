@@ -13,7 +13,7 @@ app = Flask(__name__, static_folder=root_dir)
 CORS(app)
 
 # Load Config
-with open(os.path.join(root_dir, 'Backend', 'config.json')) as f:
+with open(os.path.join(root_dir, 'config.json')) as f:
     config = json.load(f)
 
 # Initialize Logic Engines

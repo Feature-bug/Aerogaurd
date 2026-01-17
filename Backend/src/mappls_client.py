@@ -2,7 +2,7 @@ import math
 import json
 
 class MapplsGeospace:
-    def __init__(self, config_path='Backend\config.json'):
+    def __init__(self, config_path='config.json'):
         with open(config_path) as f:
             self.config = json.load(f)
         
