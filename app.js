@@ -1,4 +1,3 @@
-
 // Initialize Icons
 lucide.createIcons();
 
@@ -49,18 +48,21 @@ async function sendSimData(mode) {
             motor: { rpm: 1500, hall_detected: true },
             system: { scan_triggered: false }
         };
+        addLog("SIM", "Normal conditions simulated");
     } else if (mode === 'WARNING') {
         payload = {
             gps: { latitude: 9.9410, longitude: 76.2710, satellites: 10, hdop: 350, raw_signal: 1350 },
             mpu: { vibration_rms: 0.45, ax: 0.2, ay: 0.1, az: 0.9 },
             motor: { rpm: 3800 }
         };
+        addLog("SIM", "Warning state simulated");
     } else if (mode === 'CRITICAL') {
         payload = {
             gps: { latitude: 9.9401, longitude: 76.2701, satellites: 5, hdop: 900, raw_signal: 800 },
             mpu: { vibration_rms: 0.8, ax: 0.5, ay: -0.5, az: 0.8 },
             motor: { rpm: 200 }
         };
+        addLog("SIM", "Critical state simulated");
     } else if (mode === 'SCAN') {
         payload = { system: { scan_triggered: true } };
         addLog("SYS", "Hardware diagnostic scan triggered...");
@@ -68,12 +70,18 @@ async function sendSimData(mode) {
     }
 
     try {
-        await fetch('/data', {
+        const response = await fetch('/data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-    } catch (e) { addLog("ERR", "Simulator disconnected"); }
+        
+        if (!response.ok) {
+            addLog("ERR", `Simulator failed: ${response.status}`);
+        }
+    } catch (e) { 
+        addLog("ERR", "Simulator disconnected"); 
+    }
 }
 
 async function sync() {
@@ -99,11 +107,25 @@ async function sync() {
         document.getElementById('val-rpm').innerText = Math.round(d.motor.rpm);
         document.getElementById('val-lat').innerText = d.gps.latitude.toFixed(6);
         document.getElementById('val-long').innerText = d.gps.longitude.toFixed(6);
-        document.getElementById('val-zone').innerText = d.gps.geo_zone;
+        
+        // CRITICAL FIX: Zone color coding
+        const zoneEl = document.getElementById('val-zone');
+        zoneEl.innerText = d.gps.geo_zone;
+        if (d.gps.geo_zone === 'GREEN') {
+            zoneEl.className = 'text-emerald-400 font-black';
+        } else if (d.gps.geo_zone === 'YELLOW') {
+            zoneEl.className = 'text-amber-400 font-black';
+        } else if (d.gps.geo_zone === 'RED') {
+            zoneEl.className = 'text-rose-500 font-black';
+        }
+        
         document.getElementById('val-sats').innerText = d.gps.satellites;
-        document.getElementById('val-risk').innerText = d.system.risk_score;
-        document.getElementById('risk-progress').style.width = `${d.system.risk_score}%`;
-        document.getElementById('val-blocked-reason').innerText = d.system.blocked_reason;
+        
+        // CRITICAL FIX: Risk Score Display
+        const riskScore = d.system.risk_score || 0;
+        document.getElementById('val-risk').innerText = riskScore;
+        document.getElementById('risk-progress').style.width = `${riskScore}%`;
+        document.getElementById('val-blocked-reason').innerText = d.system.blocked_reason || 'STANDBY';
         
         // Hall Status
         const hallTag = document.getElementById('hall-tag');
@@ -126,22 +148,28 @@ async function sync() {
         connTag.className = "flex items-center gap-2 text-emerald-400 font-black";
         connTag.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 status-pulse"></span> LINK_ACTIVE`;
 
-        // Risk Level Coloring
+        // CRITICAL FIX: Risk Level Status with proper defaults
+        const riskLevel = d.system.risk_level || 'SAFE';
         const statusText = document.getElementById('risk-status');
         const readiness = document.getElementById('sys-readiness');
         
-        if (d.system.risk_level === 'SAFE') {
+        if (riskLevel === 'SAFE') {
             readiness.className = "px-8 py-2 glass rounded-2xl border-l-4 border-l-emerald-500 flex items-center gap-6 shadow-xl";
             statusText.className = "font-black text-xl text-emerald-400 uppercase tracking-tighter neon-text";
             statusText.innerText = "SAFE_TO_FLY";
-        } else if (d.system.risk_level === 'CAUTION') {
+        } else if (riskLevel === 'CAUTION') {
             readiness.className = "px-8 py-2 glass rounded-2xl border-l-4 border-l-amber-500 flex items-center gap-6 shadow-xl";
             statusText.className = "font-black text-xl text-amber-500 uppercase tracking-tighter neon-text";
             statusText.innerText = "CAUTION";
-        } else {
+        } else if (riskLevel === 'ABORT') {
             readiness.className = "px-8 py-2 glass rounded-2xl border-l-4 border-l-rose-500 flex items-center gap-6 shadow-xl";
             statusText.className = "font-black text-xl text-rose-500 uppercase tracking-tighter neon-text";
             statusText.innerText = "ABORT";
+        } else {
+            // Default STANDBY state
+            readiness.className = "px-8 py-2 glass rounded-2xl border-l-4 border-l-slate-500 flex items-center gap-6 shadow-xl";
+            statusText.className = "font-black text-xl text-slate-400 uppercase tracking-tighter neon-text";
+            statusText.innerText = "STANDBY";
         }
 
         // States
@@ -158,10 +186,16 @@ async function sync() {
         chart.updateSeries([{ data: history.ax }, { data: history.ay }, { data: history.az }]);
 
     } catch (err) {
-        document.getElementById('conn-tag').innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> OFFLINE`;
+        const connTag = document.getElementById('conn-tag');
+        connTag.className = "flex items-center gap-2 text-rose-500 font-black";
+        connTag.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> OFFLINE`;
+        console.error('Sync error:', err);
     }
 }
 
+// Auto-refresh every 1 second
 setInterval(sync, 1000);
+
+// Initial sync
 sync();
 addLog("INIT", "AeroGuard v2.5 Fusion Enabled");
