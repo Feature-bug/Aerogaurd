@@ -3,34 +3,7 @@ import json
 import os
 
 class MapplsGeospace:
-<<<<<<< HEAD
     def __init__(self, config_path='config.json'):
-=======
-    def __init__(self, config_path=None):
-        # Auto-detect config.json location
-        if config_path is None:
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            possible_paths = [
-                os.path.join(current_dir, 'config.json'),
-                os.path.join(current_dir, '..', 'config.json'),
-                os.path.join(current_dir, '..', '..', 'config.json'),
-                os.path.join(current_dir, 'Backend', 'config.json'),
-            ]
-            
-            for path in possible_paths:
-                if os.path.exists(path):
-                    config_path = path
-                    break
-            
-            if config_path is None:
-                raise FileNotFoundError(
-                    f"config.json not found! Searched in:\n" + 
-                    "\n".join(f"  - {os.path.abspath(p)}" for p in possible_paths)
-                )
-        
-        print(f"📍 MapplsGeospace loading config from: {os.path.abspath(config_path)}")
-        
->>>>>>> b0a949453364ea05fbbc7bcda4bb954105abed67
         with open(config_path) as f:
             self.config = json.load(f)
         
