@@ -44,20 +44,20 @@ async function sendSimData(mode) {
     let payload = {};
     if (mode === 'NORMAL') {
         payload = {
-            gps: { latitude: 9.9312, longitude: 76.2673, satellites: 18 },
+            gps: { latitude: 9.9312, longitude: 76.2673, satellites: 22, hdop: 120, raw_signal: 1050 },
             mpu: { vibration_rms: 0.05, ax: 0.01, ay: 0.01, az: 1.0 },
             motor: { rpm: 1500, hall_detected: true },
             system: { scan_triggered: false }
         };
     } else if (mode === 'WARNING') {
         payload = {
-            gps: { latitude: 9.9410, longitude: 76.2710, satellites: 12 }, // Near airport center
+            gps: { latitude: 9.9410, longitude: 76.2710, satellites: 10, hdop: 350, raw_signal: 1350 },
             mpu: { vibration_rms: 0.45, ax: 0.2, ay: 0.1, az: 0.9 },
             motor: { rpm: 3800 }
         };
     } else if (mode === 'CRITICAL') {
         payload = {
-            gps: { latitude: 9.9401, longitude: 76.2701, satellites: 8 }, // Inside airport center
+            gps: { latitude: 9.9401, longitude: 76.2701, satellites: 5, hdop: 900, raw_signal: 800 },
             mpu: { vibration_rms: 0.8, ax: 0.5, ay: -0.5, az: 0.8 },
             motor: { rpm: 200 }
         };
@@ -82,14 +82,21 @@ async function sync() {
         if (!response.ok) throw new Error("Offline");
         const d = await response.json();
 
-        // UI Telemetry
+        // UI Telemetry - Weather
+        if (d.weather) {
+            document.getElementById('val-wind').innerText = `${d.weather.wind_speed.toFixed(1)} m/s`;
+            document.getElementById('val-wind-display').innerText = d.weather.wind_speed.toFixed(1);
+            document.getElementById('val-visibility').innerText = `${(d.weather.visibility/1000).toFixed(1)}km`;
+            document.getElementById('val-vis-display').innerText = `${Math.min(100, (d.weather.visibility/10000)*100).toFixed(0)}%`;
+            document.getElementById('val-weather-cond').innerText = d.weather.condition.toUpperCase();
+        }
+
+        // Hardware Data
         document.getElementById('val-temp').innerText = `${d.environment.temperature.toFixed(1)}°C`;
         document.getElementById('val-humid').innerText = `${d.environment.humidity.toFixed(0)}%`;
-        document.getElementById('val-light').innerText = `${d.environment.light_percent.toFixed(0)}%`;
-        document.getElementById('bar-light').style.width = `${d.environment.light_percent}%`;
         document.getElementById('val-vib').innerText = d.mpu.vibration_rms.toFixed(3);
         document.getElementById('val-tilt').innerText = `${d.mpu.tilt_angle.toFixed(1)}°`;
-        document.getElementById('val-rpm').innerText = d.motor.rpm;
+        document.getElementById('val-rpm').innerText = Math.round(d.motor.rpm);
         document.getElementById('val-lat').innerText = d.gps.latitude.toFixed(6);
         document.getElementById('val-long').innerText = d.gps.longitude.toFixed(6);
         document.getElementById('val-zone').innerText = d.gps.geo_zone;
@@ -97,6 +104,22 @@ async function sync() {
         document.getElementById('val-risk').innerText = d.system.risk_score;
         document.getElementById('risk-progress').style.width = `${d.system.risk_score}%`;
         document.getElementById('val-blocked-reason').innerText = d.system.blocked_reason;
+        
+        // Hall Status
+        const hallTag = document.getElementById('hall-tag');
+        if (d.motor.hall_detected) {
+            hallTag.innerText = "HALL OK";
+            hallTag.className = "text-[8px] font-black px-2 py-1 rounded-lg bg-emerald-400/10 text-emerald-400 border border-emerald-400/20";
+        } else {
+            hallTag.innerText = "HALL FAULT";
+            hallTag.className = "text-[8px] font-black px-2 py-1 rounded-lg bg-rose-400/10 text-rose-400 border border-rose-400/20";
+        }
+
+        // HDOP Display
+        const rawHdop = d.gps.hdop;
+        const hdopVal = rawHdop > 50 ? rawHdop / 100.0 : rawHdop;
+        const hdopEl = document.getElementById('val-hdop');
+        hdopEl.innerText = hdopVal.toFixed(2);
         
         // Connectivity Status
         const connTag = document.getElementById('conn-tag');
@@ -121,8 +144,7 @@ async function sync() {
             statusText.innerText = "ABORT";
         }
 
-        // Active States
-        document.getElementById('scan-indicator').classList.toggle('hidden', !d.system.scan_triggered);
+        // States
         document.getElementById('fan-icon').classList.toggle('spin-slow', d.motor.rpm > 500);
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB', { hour12: false });
 
@@ -142,4 +164,4 @@ async function sync() {
 
 setInterval(sync, 1000);
 sync();
-addLog("INIT", "AeroGuard Risk Engine Sync Complete");
+addLog("INIT", "AeroGuard v2.5 Fusion Enabled");
