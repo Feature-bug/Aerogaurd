@@ -87,16 +87,45 @@ def update_global_state(incoming, source="WiFi"):
     global sensor_data, scan_reset_time
     import time
     
+    # ===== LOGGING: Print incoming data =====
+    print("\n" + "="*60)
+    print(f"📡 INCOMING DATA FROM {source}")
+    print("="*60)
+    
     # Update core state
     for cat in ["mpu", "environment", "motor", "gps", "system"]:
         if cat in incoming:
             sensor_data[cat].update(incoming[cat])
+            
+            # Print received values for each category
+            if cat == "environment":
+                print(f"🌡️  Environment Data:")
+                print(f"   Temperature: {incoming[cat].get('temperature', 'N/A')}°C")
+                print(f"   Humidity: {incoming[cat].get('humidity', 'N/A')}%")
+                print(f"   💡 Light Intensity: {incoming[cat].get('light_percent', 'N/A')}%")
+            
+            elif cat == "mpu":
+                print(f"📊 MPU6050 Data:")
+                print(f"   Vibration RMS: {incoming[cat].get('vibration_rms', 'N/A'):.3f}")
+                print(f"   Tilt Angle: {incoming[cat].get('tilt_angle', 'N/A'):.1f}°")
+            
+            elif cat == "motor":
+                print(f"⚙️  Motor Data:")
+                print(f"   RPM: {incoming[cat].get('rpm', 'N/A')}")
+                print(f"   Hall Sensor: {'✅ OK' if incoming[cat].get('hall_detected') else '❌ FAULT'}")
+            
+            elif cat == "gps":
+                print(f"🛰️  GPS Data:")
+                print(f"   Location: {incoming[cat].get('latitude', 'N/A'):.6f}, {incoming[cat].get('longitude', 'N/A'):.6f}")
+                print(f"   Satellites: {incoming[cat].get('satellites', 'N/A')}")
+                print(f"   HDOP: {incoming[cat].get('hdop', 'N/A'):.2f}")
     
     sensor_data['system']['source'] = source
 
     # Handle scan trigger
     if incoming.get('system', {}).get('scan_triggered'):
         scan_reset_time = time.time() + 5
+        print(f"🔍 DIAGNOSTIC SCAN TRIGGERED!")
 
     if sensor_data['system']['scan_triggered'] and time.time() > scan_reset_time:
         sensor_data['system']['scan_triggered'] = False
@@ -113,6 +142,10 @@ def update_global_state(incoming, source="WiFi"):
             "visibility": weather_data['visibility'],
             "condition": weather_data['weather_main']
         }
+        print(f"🌤️  Weather Data:")
+        print(f"   Condition: {weather_data['weather_main']}")
+        print(f"   Wind Speed: {weather_data['wind_speed']} m/s")
+        print(f"   Visibility: {weather_data['visibility']} m")
 
     # Run Risk Assessment Engine
     zone = mappls.check_airspace(
@@ -127,6 +160,14 @@ def update_global_state(incoming, source="WiFi"):
     sensor_data['system']['blocked_reason'] = reason
     sensor_data['system']['risk_level'] = level
     sensor_data["system"]["timestamp"] = datetime.now().isoformat()
+    
+    # Print risk assessment
+    print(f"\n⚠️  Risk Assessment:")
+    print(f"   Geo Zone: {zone}")
+    print(f"   Risk Level: {level}")
+    print(f"   Risk Score: {score}%")
+    print(f"   Reason: {reason}")
+    print("="*60 + "\n")
 
 @app.route('/data', methods=['POST'])
 def receive_data():
@@ -135,10 +176,14 @@ def receive_data():
         if not incoming: 
             return jsonify({"status": "error", "message": "No data"}), 400
         
+        # Print raw incoming JSON
+        print(f"\n📥 Raw JSON received from ESP32:")
+        print(json.dumps(incoming, indent=2))
+        
         update_global_state(incoming, source="WiFi")
         return jsonify({"status": "success", "risk": sensor_data['system']['risk_score']}), 200
     except Exception as e:
-        print(f"Server Error: {e}")
+        print(f"❌ Server Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 400
 
 @app.route('/api/current')
@@ -164,8 +209,10 @@ if __name__ == '__main__':
     print(f"📁 Root directory: {root_dir}")
     print(f"📄 Config loaded: {config_path}")
     print(f"🌐 Frontend: http://localhost:5000")
-    print(f"🌐 Network: http://YOUR_IP:5000")
+    print(f"🌐 Network: http://10.183.218.203:5000")
     print(f"📡 API endpoint: POST /data")
     print(f"📊 Data endpoint: GET /api/current")
     print("=" * 60)
+    print("📝 Logging enabled - incoming sensor data will be displayed below")
+    print("=" * 60 + "\n")
     app.run(host="0.0.0.0", port=5000, debug=True)
