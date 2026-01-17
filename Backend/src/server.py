@@ -1,5 +1,4 @@
-
-from flask import flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
 import os
@@ -14,7 +13,7 @@ app = Flask(__name__, static_folder=root_dir)
 CORS(app)
 
 # Load Config
-with open(os.path.join(root_dir, 'config.json')) as f:
+with open(os.path.join(root_dir, 'Backend', 'config.json')) as f:
     config = json.load(f)
 
 # Initialize Logic Engines

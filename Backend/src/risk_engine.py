@@ -46,6 +46,14 @@ def calculate_risk_index(sensor_data, zone, weather=None):
 
 
     score = min(score, 100)
-    recommendation = "SAFE" if score < 40 else "CAUTION" if score < 75 else "ABORT"
+    if score < 40:
+        level = "SAFE"
+    elif score < 75:
+        level = "CAUTION"
+    else:
+        level = "ABORT"
+
+    reasons_str = ", ".join(reasons) if reasons else "All systems nominal"
+    message = f"{level}: {reasons_str}"
     
-    return score, f"{recommendation}: {', '.join(reasons)}"
+    return score, level, message

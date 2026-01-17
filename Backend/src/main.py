@@ -6,7 +6,7 @@ from risk_engine import calculate_risk_index
 from weather_client import OpenWeatherClient
 
 # Load config
-with open('SmartUAV_RiskAssessmen/config.json') as f:
+with open('Backend\config.json') as f:
     config = json.load(f)
 
 # Setup
