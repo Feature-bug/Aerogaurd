@@ -45,7 +45,7 @@ async function sendSimData(mode) {
     let payload = {};
     if (mode === 'NORMAL') {
         payload = {
-            gps: { latitude: 9.9312, longitude: 76.2673, satellites: 18, hdop: 1.10 },
+            gps: { latitude: 9.9500, longitude: 76.2900, satellites: 18, hdop: 1.10 },
             mpu: { vibration_rms: 0.05, ax: 0.01, ay: 0.01, az: 1.0, tilt_angle: 0.2 },
             motor: { rpm: 1450, hall_detected: true },
             environment: { temperature: 28.0, humidity: 65, light_percent: 75 },
@@ -53,7 +53,7 @@ async function sendSimData(mode) {
         };
     } else if (mode === 'WARNING') {
         payload = {
-            gps: { latitude: 9.9312, longitude: 76.2673, satellites: 9, hdop: 4.5 },
+            gps: { latitude: 9.9400, longitude: 76.2800, satellites: 9, hdop: 4.5 },
             mpu: { vibration_rms: 0.42, ax: 0.05, ay: 0.03, az: 1.0, tilt_angle: 5.0 },
             motor: { rpm: 3200, hall_detected: true },
             environment: { temperature: 32.0, humidity: 75, light_percent: 60 },
@@ -137,9 +137,21 @@ async function sync() {
         // GPS Data
         setVal('val-lat', d.gps.latitude.toFixed(6));
         setVal('val-long', d.gps.longitude.toFixed(6));
-        setVal('val-zone', d.gps.geo_zone);
         setVal('val-sats', d.gps.satellites);
         setVal('val-hdop', d.gps.hdop.toFixed(2));
+        
+        // Geo-Zone with color coding
+        const zoneEl = document.getElementById('val-zone');
+        if (zoneEl) {
+            zoneEl.innerText = d.gps.geo_zone;
+            if (d.gps.geo_zone === 'GREEN') {
+                zoneEl.className = 'text-emerald-400 font-black uppercase tracking-tighter';
+            } else if (d.gps.geo_zone === 'YELLOW') {
+                zoneEl.className = 'text-amber-400 font-black uppercase tracking-tighter';
+            } else {
+                zoneEl.className = 'text-rose-500 font-black uppercase tracking-tighter';
+            }
+        };
         
         // Weather Data
         if (d.weather) {

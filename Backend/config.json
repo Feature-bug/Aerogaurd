@@ -3,14 +3,26 @@
   "MAPPLS_API_KEY": "your_mappls_key_here",
   "simulation_settings": {
     "airport_red_zone": {
-      "lat": 9.93,
-      "lng": 76.267,
-      "radius_km": 5.0
+      "lat": 9.9330,
+      "lng": 76.2670,
+      "radius_km": 2.0,
+      "description": "Restricted Airspace - No Fly Zone (2km radius)"
     },
     "caution_yellow_zone": {
-      "lat": 9.93,
-      "lng": 76.267,
-      "radius_km": 10.0
+      "lat": 9.9330,
+      "lng": 76.2670,
+      "radius_km": 5.0,
+      "description": "Caution Zone - Near Airport (5km radius)"
+    },
+    "default_safe_location": {
+      "lat": 9.9800,
+      "lng": 76.3200,
+      "description": "Safe Green Zone - Default operating area"
     }
+  },
+  "zone_explanation": {
+    "GREEN": "Safe flying zone (>5km from airport)",
+    "YELLOW": "Caution zone (2-5km from airport)",
+    "RED": "Restricted airspace (<2km from airport)"
   }
 }
