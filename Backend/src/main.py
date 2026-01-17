@@ -5,85 +5,107 @@ import sys
 from mappls_client import MapplsGeospace
 from risk_engine import calculate_risk_index
 from weather_client import OpenWeatherClient
+import requests
 
-# Auto-detect config.json location
-current_dir = os.path.dirname(os.path.abspath(__file__))
-possible_configs = [
-    os.path.join(current_dir, 'config.json'),
-    os.path.join(current_dir, '..', 'config.json'),
-    os.path.join(current_dir, '..', '..', 'config.json'),
-    os.path.join(current_dir, 'Backend', 'config.json'),
-]
-
-config_path = None
-for path in possible_configs:
-    if os.path.exists(path):
-        config_path = path
-        print(f"✅ Found config at: {os.path.abspath(path)}")
-        break
-
-if config_path is None:
-    print("❌ config.json not found! Searched:")
-    for path in possible_configs:
-        print(f"  - {os.path.abspath(path)}")
-    sys.exit(1)
 
 # Load config
-with open('config.json') as f:
-    config = json.load(f)
-
-# Setup
-mappls = MapplsGeospace()
-weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])
-
-# Try to open serial port
+config_path = os.path.join(os.path.dirname(__file__), '..', 'config.json')
 try:
-    ser = serial.Serial('COM10', 115200, timeout=1)
-    print("✅ Serial port COM3 opened successfully")
-except serial.SerialException as e:
-    print(f"❌ Could not open COM3: {e}")
-    print("Make sure:")
-    print("  1. ESP32 is connected via USB")
-    print("  2. Correct COM port (check Device Manager)")
-    print("  3. No other program is using the port")
+    with open(config_path) as f:
+        config = json.load(f)
+    print(f"✅ Config loaded from: {config_path}")
+except FileNotFoundError:
+    print("❌ config.json not found")
     sys.exit(1)
 
-print("\n" + "=" * 50)
-print("--- UAV Pre-Flight Safety System Active ---")
-print("=" * 50)
+# Initialize clients
+mappls = MapplsGeospace(config_path)
+weather_client = OpenWeatherClient(config.get('OPENWEATHER_API_KEY', ''))
+
+# Try to connect to ESP32
+serial_config = config.get('hardware_config', {}).get('serial', {})
+port = serial_config.get('port', 'COM3')
+baudrate = serial_config.get('baudrate', 115200)
+
+try:
+    ser = serial.Serial(port, baudrate, timeout=1)
+    print(f"✅ Connected to ESP32 on {port}")
+except serial.SerialException as e:
+    print(f"❌ Could not open {port}: {e}")
+    print("\nTroubleshooting:")
+    print("  1. Check ESP32 is connected via USB")
+    print("  2. Verify COM port in Device Manager (Windows)")
+    print("  3. Close Arduino Serial Monitor if open")
+    print("  4. Try alternative ports:", serial_config.get('alternative_ports', []))
+    sys.exit(1)
+
+print("\n" + "=" * 60)
+print("🚁 AeroGuard - Real-Time ESP32 Data Stream Active")
+print("=" * 60)
+print("Waiting for GPS fix... (This may take 30-60 seconds outdoors)\n")
+
+gps_fix_obtained = False
 
 while True:
     if ser.in_waiting > 0:
         try:
-            raw_data = ser.readline().decode('utf-8').strip()
-            data = json.loads(raw_data)
+            raw_line = ser.readline().decode('utf-8').strip()
             
-            # Get GPS coordinates (handle different data structures)
-            lat = data.get('gps', {}).get('latitude') or data.get('lat', 0)
-            lng = data.get('gps', {}).get('longitude') or data.get('lng', 0)
+            # Skip debug messages
+            if not raw_line.startswith('{'):
+                print(f"[ESP32] {raw_line}")
+                continue
             
-            # Get weather at drone's location
+            # Parse JSON data
+            data = json.loads(raw_line)
+            
+            # Extract GPS coordinates
+            lat = data.get('gps', {}).get('latitude', 0)
+            lng = data.get('gps', {}).get('longitude', 0)
+            sats = data.get('gps', {}).get('satellites', 0)
+            
+            # Check for valid GPS fix
+            if lat != 0 and lng != 0 and not gps_fix_obtained:
+                print(f"\n🛰️  GPS FIX ACQUIRED! Position: {lat:.6f}, {lng:.6f}")
+                print(f"📡 Satellites: {sats}\n")
+                gps_fix_obtained = True
+            
+            # Get weather data
             weather = weather_client.get_weather(lat, lng)
             
-            # Geofence Check
+            # Check airspace zone
             zone = mappls.check_airspace(lat, lng)
+            data['gps']['geo_zone'] = zone
             
-            # Risk Fusion (returns 3 values now)
-            risk_val, msg, level = calculate_risk_index(data, zone, weather)
+            # Calculate risk
+            risk_score, reason, level = calculate_risk_index(data, zone, weather)
+
+            # After calculating risk, send to web server
+            try:
+                response = requests.post('http://localhost:5000/data', json=data, timeout=1)
+            except:
+                pass  # Web server offline, continue with serial
             
-            # Feedback to ESP32
-            if risk_val >= 80:
-                ser.write(b"ALERT_RED\n")
-            elif risk_val >= 40:
-                ser.write(b"ALERT_YELLOW\n")
+            # Send feedback to ESP32
+            if risk_score >= 75:
+                ser.write(b"ABORT\n")
+                status_led = "🔴"
+            elif risk_score >= 40:
+                ser.write(b"CAUTION\n")
+                status_led = "🟡"
             else:
                 ser.write(b"SAFE\n")
-
-            print(f"[GPS: {lat:.5f}, {lng:.5f}] Zone: {zone} | Risk: {risk_val}% | {level}: {msg}")
-
+                status_led = "🟢"
+            
+            # Display telemetry
+            print(f"{status_led} GPS:[{lat:.5f}, {lng:.5f}] Zone:{zone} | "
+                  f"Sats:{sats} | Risk:{risk_score}% ({level}) | {reason}")
+            
+            # Also send to web server (if running)
+            # This would POST to your Flask server's /data endpoint
+            
         except json.JSONDecodeError as e:
-            print(f"JSON Error: {e} | Raw: {raw_data[:50]}")
-        except KeyError as e:
-            print(f"Missing data key: {e}")
+            print(f"⚠️  JSON Error: {e}")
+            print(f"   Raw data: {raw_line[:100]}")
         except Exception as e:
-            print(f"Sync Error: {e}")
+            print(f"⚠️  Error: {e}")
