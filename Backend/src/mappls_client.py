@@ -21,8 +21,7 @@ class MapplsGeospace:
 
     def check_airspace(self, current_lat, current_lng):
         # Calculate distance from 'Airport'
-        dist = self.haversine_distance(current_lat, current_lng, 
-                                       self.red_zone['lat'], self.red_zone['lng'])
+        dist = self.haversine_distance(current_lat, current_lng, self.red_zone['lat'], self.red_zone['lng'])
         
         if dist <= self.red_zone['radius_km']:
             return "RED"
