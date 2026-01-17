@@ -3,13 +3,13 @@
   "MAPPLS_API_KEY": "your_mappls_key_here",
   "simulation_settings": {
     "airport_red_zone": {
-      "lat": 9.9300,
-      "lng": 76.2670,
+      "lat": 9.93,
+      "lng": 76.267,
       "radius_km": 5.0
     },
     "caution_yellow_zone": {
-      "lat": 9.9300,
-      "lng": 76.2670,
+      "lat": 9.93,
+      "lng": 76.267,
       "radius_km": 10.0
     }
   }

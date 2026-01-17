@@ -8,14 +8,11 @@ import sys
 # Setup paths
 root_dir = os.path.abspath(os.path.dirname(__file__))
 
-# Add Backend/src to Python path if server.py is in root
-# OR add parent directory if server.py is in Backend/src
+# Add Backend/src to Python path
 if os.path.exists(os.path.join(root_dir, 'Backend', 'src')):
-    # server.py is in project root
     sys.path.insert(0, os.path.join(root_dir, 'Backend', 'src'))
     config_path = os.path.join(root_dir, 'Backend', 'config.json')
 else:
-    # server.py is in Backend/src
     sys.path.insert(0, root_dir)
     config_path = os.path.join(root_dir, '..', 'config.json')
 
@@ -26,7 +23,16 @@ from weather_client import OpenWeatherClient
 app = Flask(__name__, static_folder=root_dir)
 CORS(app)
 
-# Load Config with error handling
+# CRITICAL: Disable all caching for real-time data
+@app.after_request
+def add_no_cache_headers(response):
+    """Prevent caching to ensure real-time updates"""
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
+# Load Config
 try:
     with open(config_path) as f:
         config = json.load(f)
@@ -42,7 +48,6 @@ except FileNotFoundError:
             "caution_yellow_zone": {"lat": 9.9300, "lng": 76.2670, "radius_km": 10.0}
         }
     }
-    # Create Backend directory if needed
     config_dir = os.path.dirname(config_path)
     os.makedirs(config_dir, exist_ok=True)
     with open(config_path, 'w') as f:
@@ -63,7 +68,7 @@ sensor_data = {
         "speed": 0.0, 
         "satellites": 0, 
         "geo_zone": "GREEN", 
-        "hdop": 100,
+        "hdop": 1.0,
         "raw_signal": 1000 
     },
     "weather": {
@@ -89,7 +94,7 @@ def update_global_state(incoming, source="WiFi"):
     
     # ===== LOGGING: Print incoming data =====
     print("\n" + "="*60)
-    print(f"📡 INCOMING DATA FROM {source}")
+    print(f"📡 INCOMING DATA FROM {source} at {datetime.now().strftime('%H:%M:%S.%f')[:-3]}")
     print("="*60)
     
     # Update core state
@@ -145,7 +150,6 @@ def update_global_state(incoming, source="WiFi"):
         print(f"🌤️  Weather Data:")
         print(f"   Condition: {weather_data['weather_main']}")
         print(f"   Wind Speed: {weather_data['wind_speed']} m/s")
-        print(f"   Visibility: {weather_data['visibility']} m")
 
     # Run Risk Assessment Engine
     zone = mappls.check_airspace(
@@ -176,10 +180,6 @@ def receive_data():
         if not incoming: 
             return jsonify({"status": "error", "message": "No data"}), 400
         
-        # Print raw incoming JSON
-        print(f"\n📥 Raw JSON received from ESP32:")
-        print(json.dumps(incoming, indent=2))
-        
         update_global_state(incoming, source="WiFi")
         return jsonify({"status": "success", "risk": sensor_data['system']['risk_score']}), 200
     except Exception as e:
@@ -192,6 +192,8 @@ def get_current():
     global sensor_data
     if sensor_data['system']['scan_triggered'] and time.time() > scan_reset_time:
         sensor_data['system']['scan_triggered'] = False
+    
+    # Return fresh data with current timestamp
     return jsonify(sensor_data)
 
 @app.route('/')
@@ -213,6 +215,6 @@ if __name__ == '__main__':
     print(f"📡 API endpoint: POST /data")
     print(f"📊 Data endpoint: GET /api/current")
     print("=" * 60)
-    print("📝 Logging enabled - incoming sensor data will be displayed below")
+    print("📝 Real-time logging enabled - Cache disabled")
     print("=" * 60 + "\n")
     app.run(host="0.0.0.0", port=5000, debug=True)

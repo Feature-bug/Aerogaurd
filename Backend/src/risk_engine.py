@@ -5,14 +5,15 @@ def calculate_risk_index(sensor_data, zone, weather=None):
     """
     score = 0
     reasons = []
-
+    
     # 1. Geospace Penalty (Hard Rule)
     if zone == "RED":
         return 100, "CRITICAL: Restricted Airspace", "ABORT"
     elif zone == "YELLOW":
         score += 30
         reasons.append("Caution: Near Airport")
-
+    # GREEN zone: score stays 0, continue checking other conditions
+    
     # 2. Hardware Penalties (use correct data structure)
     mpu = sensor_data.get('mpu', {})
     motor = sensor_data.get('motor', {})
@@ -28,7 +29,7 @@ def calculate_risk_index(sensor_data, zone, weather=None):
     if rpm > 0 and rpm < 500:
         score += 30
         reasons.append("Motor Efficiency Low")
-
+    
     # 3. WEATHER PENALTIES
     if weather:
         # High wind (>10 m/s ≈ 36 km/h)
@@ -55,9 +56,7 @@ def calculate_risk_index(sensor_data, zone, weather=None):
         if temp is not None and (temp < -20 or temp > 45):
             score += 15
             reasons.append("Extreme Temperature")
-    else:
-        reasons.append("Weather Data Unavailable")
-
+    
     # Cap at 100
     score = min(score, 100)
     
@@ -70,6 +69,6 @@ def calculate_risk_index(sensor_data, zone, weather=None):
         level = "ABORT"
     
     # Format reason text
-    reason_text = ', '.join(reasons) if reasons else "Systems Nominal"
+    reason_text = ', '.join(reasons) if reasons else "All Systems Normal"
     
     return score, reason_text, level

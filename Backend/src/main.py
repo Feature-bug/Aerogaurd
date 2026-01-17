@@ -29,12 +29,13 @@ if config_path is None:
     sys.exit(1)
 
 # Load config
-with open(config_path) as f:
+with open('config.json') as f:
     config = json.load(f)
 
 # Setup
 mappls = MapplsGeospace()
 weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])
+ser = serial.Serial('COM10', 115200, timeout=1)
 
 # Try to open serial port
 try:
