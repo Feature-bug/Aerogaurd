@@ -1,7 +1,4 @@
-# weather_client.py
 import requests
-import json
-import os
 
 class OpenWeatherClient:
     def __init__(self, api_key):

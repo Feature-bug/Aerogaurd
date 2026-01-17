@@ -38,7 +38,7 @@ def calculate_risk_index(sensor_data, zone, weather=None):
         
         # Extreme temperature (<0°C or >45°C)
         temp = weather.get('temp')
-        if temp is not None and (temp < 0 or temp > 45):
+        if temp is not None and (temp < -20 or temp > 45):
             score += 15
             reasons.append("Extreme Temperature")
     else:

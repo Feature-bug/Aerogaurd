@@ -3,7 +3,7 @@ import serial
 import json
 from mappls_client import MapplsGeospace
 from risk_engine import calculate_risk_index
-from weather_client import OpenWeatherClient  # ← NEW
+from weather_client import OpenWeatherClient
 
 # Load config
 with open('SmartUAV_RiskAssessmen/config.json') as f:
@@ -11,7 +11,7 @@ with open('SmartUAV_RiskAssessmen/config.json') as f:
 
 # Setup
 mappls = MapplsGeospace()
-weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])  # ← NEW
+weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])
 ser = serial.Serial('COM3', 115200, timeout=1)
 
 print("--- UAV Pre-Flight Safety System Active ---")
@@ -29,7 +29,7 @@ while True:
             zone = mappls.check_airspace(data['lat'], data['lng'])
             
             # Risk Fusion (now includes weather!)
-            risk_val, msg = calculate_risk_index(data, zone, weather)  # ← PASS WEATHER
+            risk_val, msg = calculate_risk_index(data, zone, weather)
             
             # Feedback to ESP8266
             if risk_val >= 80:

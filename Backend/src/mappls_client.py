@@ -2,7 +2,7 @@ import math
 import json
 
 class MapplsGeospace:
-    def __init__(self, config_path='SmartUAV_RiskAssessmen\config.json'):
+    def __init__(self, config_path='Backend\config.json'):
         with open(config_path) as f:
             self.config = json.load(f)
         
@@ -15,8 +15,7 @@ class MapplsGeospace:
         R = 6371  # Earth radius in km
         d_lat = math.radians(lat2 - lat1)
         d_lon = math.radians(lon2 - lon1)
-        a = (math.sin(d_lat/2)**2 + 
-             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lon/2)**2)
+        a = (math.sin(d_lat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(d_lon/2)**2)
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
         return R * c
 
