@@ -1,11 +1,18 @@
+# main.py (updated)
 import serial
 import json
 from mappls_client import MapplsGeospace
 from risk_engine import calculate_risk_index
+from weather_client import OpenWeatherClient  # ← NEW
+
+# Load config
+with open('SmartUAV_RiskAssessmen/config.json') as f:
+    config = json.load(f)
 
 # Setup
 mappls = MapplsGeospace()
-#ser = serial.Serial('COM3', 115200, timeout=1) # Ensure COM port matches
+weather_client = OpenWeatherClient(config['OPENWEATHER_API_KEY'])  # ← NEW
+ser = serial.Serial('COM3', 115200, timeout=1)
 
 print("--- UAV Pre-Flight Safety System Active ---")
 
@@ -15,17 +22,20 @@ while True:
             raw_data = ser.readline().decode('utf-8').strip()
             data = json.loads(raw_data)
             
+            # Get weather at drone's location
+            weather = weather_client.get_weather(data['lat'], data['lng'])
+            
             # Simulated Geofence Check
             zone = mappls.check_airspace(data['lat'], data['lng'])
             
-            # Risk Fusion
-            risk_val, msg = calculate_risk_index(data, zone)
+            # Risk Fusion (now includes weather!)
+            risk_val, msg = calculate_risk_index(data, zone, weather)  # ← PASS WEATHER
             
             # Feedback to ESP8266
             if risk_val >= 80:
-                ser.write(b"ALERT_RED\n") # Trigger Solid Buzzer
+                ser.write(b"ALERT_RED\n")
             elif risk_val >= 40:
-                ser.write(b"ALERT_YELLOW\n") # Trigger Beeping
+                ser.write(b"ALERT_YELLOW\n")
             else:
                 ser.write(b"SAFE\n")
 
