@@ -68,9 +68,16 @@ sensor_data = {
         "longitude": None,
         "speed": 0.0, 
         "satellites": 0, 
+<<<<<<< HEAD
         "geo_zone": "UNKNOWN", 
         "hdop": 99.9,
         "raw_signal": 0
+=======
+        "geo_zone": "GREEN", 
+        "hdop": 100,
+        "raw_signal": 1000,
+        "gps_quality": "UNKNOWN"
+>>>>>>> 8e6b949a02823f0b2a488b3329d5ef7802b1a226
     },
     "weather": {
         "wind_speed": None,
@@ -82,10 +89,15 @@ sensor_data = {
         "risk_level": "STANDBY",
         "blocked_reason": "Waiting for Hardware...",
         "scan_triggered": False,
+<<<<<<< HEAD
         "source": "NONE",
         "timestamp": datetime.now().isoformat(),
         "gps_valid": False,
         "sensors_valid": False
+=======
+        "timestamp": datetime.now().isoformat(),
+        "source": "SIM"
+>>>>>>> 8e6b949a02823f0b2a488b3329d5ef7802b1a226
     }
 }
 
@@ -173,11 +185,26 @@ def update_global_state(incoming, source="WiFi"):
         scan_reset_time = time.time() + 5
         print(f"🔍 DIAGNOSTIC SCAN TRIGGERED!")
 
+<<<<<<< HEAD
     if sensor_data['system']['scan_triggered'] and time.time() > scan_reset_time:
         sensor_data['system']['scan_triggered'] = False
 
     # ✅ FIXED: Only fetch weather if GPS is valid
     if has_valid_gps and sensor_data['gps']['latitude'] is not None:
+=======
+        # Mark data source
+        if 'system' in incoming:
+            sensor_data['system']['source'] = "WEB_SIM"  # From web simulator
+        else:
+            sensor_data['system']['source'] = "ESP32"
+
+        # Update core state
+        for cat in ["mpu", "environment", "motor", "gps", "system"]:
+            if cat in incoming:
+                sensor_data[cat].update(incoming[cat])
+
+        # Fetch Environmental Data (Weather)
+>>>>>>> 8e6b949a02823f0b2a488b3329d5ef7802b1a226
         weather_data = weather_api.get_weather(
             sensor_data['gps']['latitude'], 
             sensor_data['gps']['longitude']

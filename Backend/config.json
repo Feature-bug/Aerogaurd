@@ -15,8 +15,8 @@
       "description": "Caution Zone - Near Airport (5km radius)"
     },
     "default_safe_location": {
-      "lat": 9.9800,
-      "lng": 76.3200,
+      "lat": "No Satllite",
+      "lng": "No Satllite",
       "description": "Safe Green Zone - Default operating area"
     }
   },
