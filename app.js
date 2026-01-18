@@ -159,6 +159,46 @@ async function sync() {
             setVal('val-wind-display', d.weather.wind_speed.toFixed(1));
             setVal('val-weather-cond', d.weather.condition);
         }
+
+        //HDOP display
+        const hdopRaw = d.gps.hdop || 9999;
+        const hdopActual = hdopRaw > 50 ? hdopRaw / 100.0 : hdopRaw;
+        const hdopEl = document.getElementById('val-hdop');
+        
+        if (hdopActual < 99) {
+            hdopEl.innerText = hdopActual.toFixed(2);
+            
+            // Color code HDOP
+            if (hdopActual < 2.0) {
+                hdopEl.className = 'text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20';
+            } else if (hdopActual < 5.0) {
+                hdopEl.className = 'text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20';
+            } else if (hdopActual < 10.0) {
+                hdopEl.className = 'text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20';
+            } else {
+                hdopEl.className = 'text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20';
+            }
+        } else {
+            hdopEl.innerText = "---";
+            hdopEl.className = 'text-slate-500 font-bold';
+        }
+        
+        // GPS Quality Status
+        const gpsQuality = d.gps.gps_quality || "UNKNOWN";
+        const gpsQualityEl = document.getElementById('gps-quality');
+        if (gpsQualityEl) {
+            gpsQualityEl.innerText = gpsQuality;
+            
+            if (gpsQuality === "IDEAL" || gpsQuality === "EXCELLENT") {
+                gpsQualityEl.className = 'text-[8px] font-black text-emerald-400';
+            } else if (gpsQuality === "GOOD") {
+                gpsQualityEl.className = 'text-[8px] font-black text-sky-400';
+            } else if (gpsQuality === "MODERATE") {
+                gpsQualityEl.className = 'text-[8px] font-black text-amber-400';
+            } else {
+                gpsQualityEl.className = 'text-[8px] font-black text-rose-400';
+            }
+        }
         
         // Risk Assessment
         setVal('val-risk', d.system.risk_score);
@@ -252,10 +292,24 @@ async function sync() {
         }
 
         // Connectivity Status
-        const source = d.system.source || "WIFI";
-        const connTag = document.getElementById('conn-tag');
-        if (connTag) {
-            connTag.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 status-pulse"></span> ${source}_LINK_ACTIVE`;
+        // Update data source indicator
+        const source = d.system.source || "UNKNOWN";
+        const sourceText = document.getElementById('data-source-text');
+        const sourceIndicator = document.getElementById('data-source-indicator');
+
+        if (sourceText && sourceIndicator) {
+            sourceText.innerText = source;
+            
+            if (source === "ESP32") {
+                sourceIndicator.className = "flex items-center gap-2 px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20";
+                sourceText.className = "text-emerald-400";
+            } else if (source === "WEB_SIM") {
+                sourceIndicator.className = "flex items-center gap-2 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20";
+                sourceText.className = "text-purple-400";
+            } else {
+                sourceIndicator.className = "flex items-center gap-2 px-2 py-1 rounded bg-slate-500/10 border border-slate-500/20";
+                sourceText.className = "text-slate-400";
+            }
         }
 
         // Visual FX - Fan rotation
