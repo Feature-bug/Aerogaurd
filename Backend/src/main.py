@@ -24,7 +24,7 @@ weather_client = OpenWeatherClient(config.get('OPENWEATHER_API_KEY', ''))
 
 # Try to connect to ESP32
 serial_config = config.get('hardware_config', {}).get('serial', {})
-port = serial_config.get('port', 'COM3')
+port = serial_config.get('port', 'COM10')
 baudrate = serial_config.get('baudrate', 115200)
 
 try:
@@ -96,6 +96,58 @@ while True:
             else:
                 ser.write(b"SAFE\n")
                 status_led = "🟢"
+
+            while True:
+                if ser.in_waiting > 0:
+                    try:
+                        raw_line = ser.readline().decode('utf-8').strip()
+                        
+                        if not raw_line.startswith('{'):
+                            print(f"[ESP32] {raw_line}")
+                            continue
+                        
+                        data = json.loads(raw_line)
+                        
+                        # Get weather and calculate risk
+                        lat = data.get('gps', {}).get('latitude', 0)
+                        lng = data.get('gps', {}).get('longitude', 0)
+                        sats = data.get('gps', {}).get('satellites', 0)
+                        
+                        weather = weather_client.get_weather(lat, lng)
+                        zone = mappls.check_airspace(lat, lng)
+                        data['gps']['geo_zone'] = zone
+                        
+                        risk_score, reason, level = calculate_risk_index(data, zone, weather)
+                        
+                        # Add system data
+                        if 'system' not in data:
+                            data['system'] = {}
+                        
+                        data['system']['risk_score'] = risk_score
+                        data['system']['blocked_reason'] = reason
+                        data['system']['risk_level'] = level
+                        data['system']['source'] = 'ESP32'
+                        
+                        # ✅ SEND TO WEB SERVER
+                        try:
+                            response = requests.post('http://localhost:5000/data', json=data,timeout=1)
+                            if response.ok:
+                                print(f"✅ Data sent to web server")
+                        except:
+                            print("⚠️  Web server offline")
+                        
+                        # Send feedback to ESP32
+                        if risk_score >= 75:
+                            ser.write(b"ABORT\n")
+                        elif risk_score >= 40:
+                            ser.write(b"CAUTION\n")
+                        else:
+                            ser.write(b"SAFE\n")
+                        
+                        print(f"🟢 GPS:[{lat:.5f}, {lng:.5f}] Zone:{zone} | Risk:{risk_score}%")
+                        
+                    except Exception as e:
+                        print(f"⚠️  Error: {e}")
             
             # Display telemetry
             print(f"{status_led} GPS:[{lat:.5f}, {lng:.5f}] Zone:{zone} | "

@@ -42,7 +42,8 @@ sensor_data = {
         "satellites": 0, 
         "geo_zone": "GREEN", 
         "hdop": 100,
-        "raw_signal": 1000 
+        "raw_signal": 1000,
+        "gps_quality": "UNKNOWN"
     },
     "weather": {
         "wind_speed": 0.0,
@@ -54,7 +55,8 @@ sensor_data = {
         "risk_level": "SAFE",
         "blocked_reason": "All Systems Normal",
         "scan_triggered": False,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "source": "SIM"
     }
 }
 
@@ -67,6 +69,17 @@ def receive_data():
             return jsonify({"status": "error", "message": "No data"}), 400
 
         print(f"\n[INCOMING] {incoming}")
+
+        # Update core state
+        for cat in ["mpu", "environment", "motor", "gps", "system"]:
+            if cat in incoming:
+                sensor_data[cat].update(incoming[cat])
+
+        # Mark data source
+        if 'system' in incoming:
+            sensor_data['system']['source'] = "WEB_SIM"  # From web simulator
+        else:
+            sensor_data['system']['source'] = "ESP32"
 
         # Update core state
         for cat in ["mpu", "environment", "motor", "gps", "system"]:
