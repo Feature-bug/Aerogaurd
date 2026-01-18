@@ -52,7 +52,9 @@
                             <span class="w-2 h-2 rounded-full bg-slate-500"></span> OFFLINE
                         </span>
                         <span id="clock" class="mono text-sky-500/50">00:00:00</span>
-                        <span class="flex items-center gap-2"><i data-lucide="cloud-rain" class="w-3 h-3"></i> <span id="val-weather-cond">INIT...</span></span>
+                        <span id="gps-status" class="flex items-center gap-2">
+                            <i data-lucide="satellite" class="w-3 h-3"></i> NO GPS
+                        </span>
                     </div>
                 </div>
             </div>
@@ -78,22 +80,22 @@
             <button onclick="sendSimData('SCAN')" class="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-[10px] font-bold text-sky-400 uppercase hover:bg-sky-500/20">Global Scan</button>
         </div>
 
-        <!-- Telemetry Grid -->
+        <!-- Telemetry Grid - ✅ REPLACED Wind Speed with MPU Accelerometer -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             
-            <div class="glass p-6 rounded-3xl border-t-2 border-t-orange-500/50 group">
+            <!-- ✅ NEW: Accelerometer X Card -->
+            <div class="glass p-6 rounded-3xl border-t-2 border-t-sky-500/50 group">
                 <div class="flex justify-between items-start mb-4">
-                    <i data-lucide="wind" class="w-7 h-7 text-sky-300"></i>
+                    <i data-lucide="move-horizontal" class="w-7 h-7 text-sky-300"></i>
                     <div class="text-right">
-                        <div id="val-wind" class="text-lg font-bold text-white mono">0.0 m/s</div>
-                        <div class="text-[8px] uppercase font-bold text-slate-500">Wind Velocity</div>
+                        <div class="text-[8px] uppercase font-bold text-slate-500">Accel X-Axis</div>
                     </div>
                 </div>
-                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Wind Speed</h3>
-                <div class="text-4xl font-black mono text-white" id="val-wind-display">0.0</div>
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Linear Accel X</h3>
+                <div class="text-4xl font-black mono text-white" id="val-accel-x">0.00<span class="text-xs ml-1 text-slate-500 font-normal">m/s²</span></div>
             </div>
 
-            <!-- FIXED: Light Intensity Card -->
+            <!-- Light Intensity Card -->
             <div class="glass p-6 rounded-3xl border-t-2 border-t-amber-500/50">
                 <div class="flex justify-between items-start mb-4">
                     <i data-lucide="sun" class="w-7 h-7 text-amber-400"></i>
@@ -175,27 +177,27 @@
                     <div class="space-y-5 mono text-[14px]">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Latitude</span>
-                            <span id="val-lat" class="text-white font-bold bg-white/5 px-2 py-1 rounded">0.00000</span>
+                            <span id="val-lat" class="text-white font-bold bg-white/5 px-2 py-1 rounded">NO FIX</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Longitude</span>
-                            <span id="val-long" class="text-white font-bold bg-white/5 px-2 py-1 rounded">0.00000</span>
+                            <span id="val-long" class="text-white font-bold bg-white/5 px-2 py-1 rounded">NO FIX</span>
                         </div>
                         <div class="flex justify-between items-center border-b border-white/5 pb-2">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Geo-Zone</span>
-                            <span id="val-zone" class="text-rose-500 font-black uppercase tracking-tighter">INIT...</span>
+                            <span id="val-zone" class="text-slate-500 font-black uppercase tracking-tighter">WAITING</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Temp/Humidity</span>
                             <div class="flex gap-2">
-                                <span id="val-temp" class="text-orange-400">0°C</span>
+                                <span id="val-temp" class="text-orange-400">--°C</span>
                                 <span class="text-slate-700">/</span>
-                                <span id="val-humid" class="text-blue-400">0%</span>
+                                <span id="val-humid" class="text-blue-400">--%</span>
                             </div>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">GNSS Precision</span>
-                            <span id="val-hdop" class="text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">0.00</span>
+                            <span id="val-hdop" class="text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">--</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Constellation</span>
