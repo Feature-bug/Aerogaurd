@@ -52,7 +52,15 @@
                             <span class="w-2 h-2 rounded-full bg-slate-500"></span> OFFLINE
                         </span>
                         <span id="clock" class="mono text-sky-500/50">00:00:00</span>
-                        <span class="flex items-center gap-2"><i data-lucide="cloud-rain" class="w-3 h-3"></i> <span id="val-weather-cond">INIT...</span></span>
+                        <span class="flex items-center gap-2">
+                            <i data-lucide="cloud-rain" class="w-3 h-3"></i> 
+                            <span id="val-weather-cond">INIT...</span>
+                        </span>
+                        <!-- ✅ Data Source Indicator (moved here from wrong location) -->
+                        <span id="data-source-indicator" class="flex items-center gap-2 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20">
+                            <i data-lucide="database" class="w-3 h-3 text-purple-400"></i>
+                            <span id="data-source-text" class="text-purple-400">SIM</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -70,30 +78,31 @@
             </div>
         </header>
 
-        <!-- Toolbars -->
+        <!-- Simulator Panel -->
         <div id="sim-panel" class="hidden glass p-6 rounded-3xl border-2 border-dashed border-sky-500/20 grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <button onclick="sendSimData('NORMAL')" class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-bold text-emerald-400 uppercase hover:bg-emerald-500/20">Set Normal</button>
-            <button onclick="sendSimData('WARNING')" class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-bold text-amber-400 uppercase hover:bg-amber-500/20">Trigger Warning</button>
-            <button onclick="sendSimData('CRITICAL')" class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-bold text-rose-400 uppercase hover:bg-rose-500/20">Critical Alert</button>
-            <button onclick="sendSimData('SCAN')" class="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-[10px] font-bold text-sky-400 uppercase hover:bg-sky-500/20">Global Scan</button>
+            <button onclick="sendSimData('NORMAL')" class="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-bold text-emerald-400 uppercase hover:bg-emerald-500/20 transition-all">✅ Set Normal</button>
+            <button onclick="sendSimData('WARNING')" class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-bold text-amber-400 uppercase hover:bg-amber-500/20 transition-all">⚠️ Trigger Warning</button>
+            <button onclick="sendSimData('CRITICAL')" class="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-bold text-rose-400 uppercase hover:bg-rose-500/20 transition-all">🚨 Critical Alert</button>
+            <button onclick="sendSimData('SCAN')" class="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-[10px] font-bold text-sky-400 uppercase hover:bg-sky-500/20 transition-all">🔍 Global Scan</button>
         </div>
 
         <!-- Telemetry Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-6">
             
+            <!-- Temperature Card -->
             <div class="glass p-6 rounded-3xl border-t-2 border-t-orange-500/50 group">
                 <div class="flex justify-between items-start mb-4">
-                    <i data-lucide="wind" class="w-7 h-7 text-sky-300"></i>
+                    <i data-lucide="thermometer" class="w-7 h-7 text-orange-300"></i>
                     <div class="text-right">
-                        <div id="val-wind" class="text-lg font-bold text-white mono">0.0 m/s</div>
-                        <div class="text-[8px] uppercase font-bold text-slate-500">Wind Velocity</div>
+                        <div id="val-humid" class="text-lg font-bold text-white mono">0%</div>
+                        <div class="text-[8px] uppercase font-bold text-slate-500">Humidity</div>
                     </div>
                 </div>
-                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Wind Speed</h3>
-                <div class="text-4xl font-black mono text-white" id="val-wind-display">0.0</div>
+                <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Temperature</h3>
+                <div class="text-4xl font-black mono text-white" id="val-temp">0.0<span class="text-xs ml-1 text-slate-500 font-normal">°C</span></div>
             </div>
 
-            <!-- FIXED: Light Intensity Card -->
+            <!-- Light Intensity Card -->
             <div class="glass p-6 rounded-3xl border-t-2 border-t-amber-500/50">
                 <div class="flex justify-between items-start mb-4">
                     <i data-lucide="sun" class="w-7 h-7 text-amber-400"></i>
@@ -102,9 +111,10 @@
                     </div>
                 </div>
                 <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Light Intensity</h3>
-                <div class="text-4xl font-black mono text-white" id="val-light">--<span class="text-xs ml-1 text-slate-500 font-normal">%</span></div>
+                <div class="text-4xl font-black mono text-white" id="val-light">0<span class="text-xs ml-1 text-slate-500 font-normal">%</span></div>
             </div>
 
+            <!-- Vibration Card -->
             <div class="glass p-6 rounded-3xl border-t-2 border-t-purple-500/50">
                 <div class="flex justify-between items-start mb-4">
                     <i data-lucide="gauge" class="w-7 h-7 text-purple-400"></i>
@@ -117,6 +127,7 @@
                 <div class="text-4xl font-black mono text-white" id="val-vib">0.00<span class="text-xs ml-1 text-slate-500 font-normal">G</span></div>
             </div>
 
+            <!-- Motor RPM Card -->
             <div class="glass p-6 rounded-3xl border-t-2 border-t-sky-500/50">
                 <div class="flex justify-between items-start mb-4">
                     <i data-lucide="fan" class="w-7 h-7 text-sky-400" id="fan-icon"></i>
@@ -126,6 +137,7 @@
                 <div class="text-4xl font-black mono text-white" id="val-rpm">0</div>
             </div>
 
+            <!-- Risk Assessment Card (2 columns wide) -->
             <div class="xl:col-span-2 glass p-6 rounded-3xl border-t-2 border-t-rose-500/50 relative overflow-hidden group">
                 <div id="scan-indicator" class="hidden absolute top-4 right-4 text-[9px] font-black px-3 py-1 bg-rose-500 text-white rounded-full status-pulse uppercase shadow-lg shadow-rose-500/20">Critical Sensor Warning</div>
                 <h3 class="text-[10px] uppercase tracking-widest text-slate-500 mb-1 font-bold">Mission Risk Fusion</h3>
@@ -142,77 +154,37 @@
             </div>
         </div>
 
-        <div class="glass p-6 rounded-3xl border-t border-white/5 shadow-2xl">
-    <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
-        <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
-            <i data-lucide="navigation" class="w-4 h-4 text-sky-400"></i> Navigation Data
-        </h3>
-        <div class="flex items-center gap-2">
-            <span class="text-[8px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/20 font-black">AI-THINKER GP02</span>
-        </div>
-    </div>
-    <div class="space-y-5 mono text-[14px]">
-        <div class="flex justify-between items-center">
-            <span class="text-slate-500 uppercase font-bold text-[10px]">Latitude</span>
-            <span id="val-lat" class="text-white font-bold bg-white/5 px-2 py-1 rounded">0.00000</span>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-slate-500 uppercase font-bold text-[10px]">Longitude</span>
-            <span id="val-long" class="text-white font-bold bg-white/5 px-2 py-1 rounded">0.00000</span>
-        </div>
-        <div class="flex justify-between items-center border-b border-white/5 pb-2">
-            <span class="text-slate-500 uppercase font-bold text-[10px]">Geo-Zone</span>
-            <span id="val-zone" class="text-rose-500 font-black uppercase tracking-tighter">INIT...</span>
-        </div>
-        
-        <!-- HDOP Display -->
-        <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-white/5">
-            <div class="flex flex-col">
-                <span class="text-slate-500 uppercase font-bold text-[9px]">GPS Precision (HDOP)</span>
-                <span id="gps-quality" class="text-[8px] font-black text-sky-400 mt-1">GOOD</span>
-            </div>
-            <span id="val-hdop" class="text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">0.00</span>
-        </div>
-        
-        <div class="flex justify-between items-center">
-            <span class="text-slate-500 uppercase font-bold text-[10px]">Temp/Humidity</span>
-            <div class="flex gap-2">
-                <span id="val-temp" class="text-orange-400">0°C</span>
-                <span class="text-slate-700">/</span>
-                <span id="val-humid" class="text-blue-400">0%</span>
-            </div>
-        </div>
-        <div class="flex justify-between items-center">
-            <span class="text-slate-500 uppercase font-bold text-[10px]">Constellation</span>
-            <div class="flex items-center gap-2">
-                <span id="val-sats" class="text-white font-black">0</span>
-                <span class="text-[8px] text-sky-400 font-bold opacity-50">SATS</span>
-            </div>
-        </div>
-    </div>
-</div>
-
         <!-- Analysis Center -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
+            <!-- MPU Chart (2 columns wide) -->
             <div class="lg:col-span-2 glass p-8 rounded-3xl h-[480px] flex flex-col border border-white/5 relative">
                 <div class="flex justify-between items-center mb-8">
                     <div>
                         <h3 class="font-black text-2xl flex items-center gap-3 text-white tracking-tight italic uppercase">
-                            <i data-lucide="activity" class="w-6 h-6 text-sky-400"></i> MPU Dynamics <span class="text-xs not-italic text-slate-500 ml-2 font-bold opacity-50">Real-time Oscilloscope</span>
+                            <i data-lucide="activity" class="w-6 h-6 text-sky-400"></i> MPU Dynamics 
+                            <span class="text-xs not-italic text-slate-500 ml-2 font-bold opacity-50">Real-time Oscilloscope</span>
                         </h3>
                     </div>
                     <div class="flex gap-5 text-[10px] font-bold uppercase tracking-widest">
-                        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> Accel X</span>
-                        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"></span> Accel Y</span>
-                        <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> Accel Z</span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]"></span> X-Axis
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.5)]"></span> Y-Axis
+                        </span>
+                        <span class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span> Z-Axis
+                        </span>
                     </div>
                 </div>
                 <div id="chart" class="flex-grow"></div>
             </div>
 
+            <!-- Right Sidebar -->
             <div class="flex flex-col gap-6">
-                <!-- Navigation -->
+                
+                <!-- Navigation Data Card -->
                 <div class="glass p-6 rounded-3xl border-t border-white/5 shadow-2xl">
                     <div class="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
                         <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
@@ -222,48 +194,31 @@
                             <span class="text-[8px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded border border-sky-500/20 font-black">AI-THINKER GP02</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-6 mt-1 text-[10px] font-bold tracking-widest uppercase text-slate-500">
-                    <span id="conn-tag" class="flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-slate-500"></span> OFFLINE
-                    </span>
-                    <span id="clock" class="mono text-sky-500/50">00:00:00</span>
-                    <span class="flex items-center gap-2">
-                        <i data-lucide="cloud-rain" class="w-3 h-3"></i> 
-                        <span id="val-weather-cond">INIT...</span>
-                    </span>
-                    <!-- ADD THIS: Data Source Indicator -->
-                    <span id="data-source-indicator" class="flex items-center gap-2 px-2 py-1 rounded bg-purple-500/10 border border-purple-500/20">
-                        <i data-lucide="database" class="w-3 h-3 text-purple-400"></i>
-                        <span id="data-source-text" class="text-purple-400">SIM</span>
-                    </span>
-                </div>
                     <div class="space-y-5 mono text-[14px]">
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Latitude</span>
-                            <span id="val-lat" class="text-white font-bold bg-white/5 px-2 py-1 rounded">0.00000</span>
+                            <span id="val-lat" class="text-white font-bold bg-white/5 px-2 py-1 rounded">NO FIX</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Longitude</span>
-                            <span id="val-long" class="text-white font-bold bg-white/5 px-2 py-1 rounded">0.00000</span>
+                            <span id="val-long" class="text-white font-bold bg-white/5 px-2 py-1 rounded">NO FIX</span>
                         </div>
                         <div class="flex justify-between items-center border-b border-white/5 pb-2">
                             <span class="text-slate-500 uppercase font-bold text-[10px]">Geo-Zone</span>
-                            <span id="val-zone" class="text-rose-500 font-black uppercase tracking-tighter">INIT...</span>
+                            <span id="val-zone" class="text-slate-500 font-black uppercase tracking-tighter">WAITING</span>
                         </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500 uppercase font-bold text-[10px]">Temperature</span>
-                            <div class="flex gap-2">
-                                <span id="val-temp" class="text-orange-400">0°C</span>
-                                <span class="text-slate-700">/</span>
-                                <span id="val-humid" class="text-blue-400">0%</span>
+                        
+                        <!-- HDOP Display -->
+                        <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                            <div class="flex flex-col">
+                                <span class="text-slate-500 uppercase font-bold text-[9px]">GPS Precision (HDOP)</span>
+                                <span id="gps-quality" class="text-[8px] font-black text-slate-500 mt-1">UNKNOWN</span>
                             </div>
+                            <span id="val-hdop" class="text-slate-400 font-bold bg-slate-500/10 px-2 py-0.5 rounded border border-slate-500/20">--</span>
                         </div>
+                        
                         <div class="flex justify-between items-center">
-                            <span class="text-slate-500 uppercase font-bold text-[10px]">GNSS Precision</span>
-                            <span id="val-hdop" class="text-sky-400 font-bold bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">0.00</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-500 uppercase font-bold text-[10px]">Constellation</span>
+                            <span class="text-slate-500 uppercase font-bold text-[10px]">Satellites</span>
                             <div class="flex items-center gap-2">
                                 <span id="val-sats" class="text-white font-black">0</span>
                                 <span class="text-[8px] text-sky-400 font-bold opacity-50">SATS</span>
@@ -272,8 +227,8 @@
                     </div>
                 </div>
 
-                <!-- Event Console -->
-                <div class="glass p-6 rounded-3xl flex-grow h-[200px] flex flex-col overflow-hidden border border-white/5">
+                <!-- Flight Log Console -->
+                <div class="glass p-6 rounded-3xl flex-grow min-h-[200px] flex flex-col overflow-hidden border border-white/5">
                     <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
                         <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Flight Log Console</h3>
                         <i data-lucide="terminal" class="w-4 h-4 text-slate-700"></i>
@@ -288,6 +243,7 @@
             <span id="update-stamp" class="text-[10px] text-slate-500 mono font-bold">Last Packet: --:--:--</span>
         </div>
     </div>
+    
     <script src="app.js"></script>
 </body>
 </html>
